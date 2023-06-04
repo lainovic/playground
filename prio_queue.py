@@ -1,6 +1,12 @@
+import operator
+
+
 class PriorityQueue:
-    def __init__(self):
+    def __init__(self, less_than_predicate=None):
         self.data = []
+        self._less_than = \
+            less_than_predicate if less_than_predicate is not None \
+            else operator.lt
 
     def push(self, val):
         self.data.append(val)
@@ -26,9 +32,6 @@ class PriorityQueue:
         self.data[i], self.data[j] = self.data[j], self.data[i]
 
     def _bubble_up(self, idx=None):
-        """
-        recursive
-        """
         if idx is None:
             idx = len(self.data) - 1
         if idx == 0:
@@ -36,14 +39,11 @@ class PriorityQueue:
         pidx = self._get_parent_idx(idx)
         pval = self.data[pidx]
         val = self.data[idx]
-        if val < pval:
+        if self._less_than(val, pval):
             self._swap(idx, pidx)
             self._bubble_up(pidx)
 
     def _bubble_down(self, idx=None):
-        """
-        recursive
-        """
         if idx is None:
             idx = 0
         if idx >= len(self.data):
@@ -55,15 +55,15 @@ class PriorityQueue:
         lval = self.data[lidx]
         ridx = self._get_right_child_idx(idx)
         if ridx >= len(self.data):
-            if val > lval:
+            if self._less_than(lval, val):
                 self._swap(idx, lidx)
                 self._bubble_down(lidx)
             return
         rval = self.data[ridx]
-        if lval <= rval and val > lval:
+        if self._less_than(lval, rval) and self._less_than(lval, val):
             self._swap(idx, lidx)
             self._bubble_down(lidx)
-        elif rval < lval and val > rval:
+        elif self._less_than(rval, val):
             self._swap(idx, ridx)
             self._bubble_down(ridx)
 
@@ -77,7 +77,7 @@ class PriorityQueue:
         return self._get_left_child_idx(parent_idx) + 1
 
 
-if __name__ == "__main__":
+def test_without_custom_predicate():
     queue = PriorityQueue()
 
     print(queue.pop())
@@ -85,12 +85,37 @@ if __name__ == "__main__":
     print("adding items...")
 
     print("push item: 1"), queue.push(1)
-    print("push item: 2"), queue.push(2)
-    print("push item: 3"), queue.push(3)
     print("push item: 4"), queue.push(4)
+    print("push item: 3"), queue.push(3)
+    print("push item: 2"), queue.push(2)
 
     print(f"peek: {queue.peek()}")
     print(f"pop: {queue.pop()}")
     print(f"pop: {queue.pop()}")
     print(f"pop: {queue.pop()}")
     print(f"pop: {queue.pop()}")
+
+
+def test_with_custom_predicate():
+    queue = PriorityQueue(less_than_predicate=lambda x,
+                          y: x["first"] < y["first"])
+
+    print(queue.pop())
+    print(queue.peek())
+    print("adding items...")
+
+    print("push item: 1"), queue.push({"first": 1, "second": "bla"})
+    print("push item: 4"), queue.push({"first": 4, "second": "bla"})
+    print("push item: 3"), queue.push({"first": 3, "second": "bla"})
+    print("push item: 2"), queue.push({"first": 2, "second": "bla"})
+
+    print(f"peek: {queue.peek()}")
+    print(f"pop: {queue.pop()}")
+    print(f"pop: {queue.pop()}")
+    print(f"pop: {queue.pop()}")
+    print(f"pop: {queue.pop()}")
+
+
+if __name__ == "__main__":
+    test_without_custom_predicate()
+    test_with_custom_predicate()
